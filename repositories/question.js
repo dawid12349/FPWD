@@ -1,29 +1,22 @@
 const { readFile, writeFile } = require('fs/promises')
 
 const makeQuestionRepository = fileName => {
-  const getQuestions = async () => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent)
-
-    return questions
-  }
+  const getQuestions = async () => await readQuestionsFromFile()
 
   const getQuestionById = async questionId => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent) || []
+    const questions = await readQuestionsFromFile()
     return questions.find(question => question.id === questionId)
   }
   const addQuestion = async question => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent) || []
+    const questions = await readQuestionsFromFile()
     questions.push(question)
     await writeFile(fileName, JSON.stringify(questions, null, 2), {
       encoding: 'utf-8'
     })
+    return question
   }
   const getAnswers = async questionId => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent) || []
+    const questions = await readQuestionsFromFile()
     const foundQuestion = questions.find(question => question.id === questionId)
 
     if (!foundQuestion && !foundQuestion.answers) {
@@ -34,11 +27,10 @@ const makeQuestionRepository = fileName => {
   }
 
   const getAnswer = async (questionId, answerId) => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent) || []
+    const questions = await readQuestionsFromFile()
     const foundQuestion = questions.find(question => question.id === questionId)
 
-    if (!foundQuestion && !foundQuestion.answers) {
+    if (!Array.isArray(foundQuestion.answers)) {
       return undefined
     }
 
@@ -46,8 +38,7 @@ const makeQuestionRepository = fileName => {
   }
 
   const addAnswer = async (questionId, answer) => {
-    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    const questions = JSON.parse(fileContent) || []
+    const questions = await readQuestionsFromFile()
     const foundQuestion = questions.find(question => question.id === questionId)
 
     if (!foundQuestion) {
@@ -60,6 +51,17 @@ const makeQuestionRepository = fileName => {
       foundQuestion.answers = [...answer]
     }
 
+    await writeQuestionToFile(questions)
+
+    return answer
+  }
+
+  const readQuestionsFromFile = async () => {
+    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
+    return JSON.parse(fileContent) || []
+  }
+
+  const writeQuestionToFile = async questions => {
     await writeFile(fileName, JSON.stringify(questions, null, 2), {
       encoding: 'utf-8'
     })
