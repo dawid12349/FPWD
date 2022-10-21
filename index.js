@@ -30,7 +30,7 @@ app.get('/questions/:questionId', async (req, res) => {
   if (!question) {
     return res.status(400).json({
       success: false,
-      message: `couldn't find question wiht id - ${questionId}`
+      message: `couldn't find question with id - ${questionId}`
     })
   }
 
@@ -51,7 +51,19 @@ app.post('/questions', async (req, res) => {
   return res.status(200).json(question)
 })
 
-app.get('/questions/:questionId/answers', (req, res) => {})
+app.get('/questions/:questionId/answers', async (req, res) => {
+  const { questionId } = req.params
+  const question = await req.repositories.questionRepo.getAnswers(questionId)
+
+  if (!question) {
+    return res.status(400).json({
+      success: false,
+      message: `couldn't find answers for question with id - ${questionId}`
+    })
+  }
+
+  return res.status(200).json(question)
+})
 
 app.post('/questions/:questionId/answers', (req, res) => {})
 

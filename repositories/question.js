@@ -19,7 +19,7 @@ const makeQuestionRepository = fileName => {
     const questions = await readQuestionsFromFile()
     const foundQuestion = questions.find(question => question.id === questionId)
 
-    if (!foundQuestion && !foundQuestion.answers) {
+    if (!foundQuestion || !Array.isArray(foundQuestion.answers)) {
       return undefined
     }
 
