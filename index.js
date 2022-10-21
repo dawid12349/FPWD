@@ -84,7 +84,23 @@ app.post('/questions/:questionId/answers', async (req, res) => {
   return res.status(200).json(answer)
 })
 
-app.get('/questions/:questionId/answers/:answerId', (req, res) => {})
+app.get('/questions/:questionId/answers/:answerId', async (req, res) => {
+  const { questionId, answerId } = req.params
+
+  const answer = await req.repositories.questionRepo.getAnswer(
+    questionId,
+    answerId
+  )
+
+  if (!answer) {
+    return res.status(400).json({
+      success: false,
+      message: `couldn't get answer for question with id - ${questionId} and answer id - ${answerId}`
+    })
+  }
+
+  return res.status(200).json(answer)
+})
 
 app.listen(PORT, () => {
   console.log(`Responder app listening on port ${PORT}`)
