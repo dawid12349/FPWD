@@ -1,7 +1,11 @@
 const { writeFile, rm } = require('fs/promises')
 const { faker } = require('@faker-js/faker')
 const { makeQuestionRepository } = require('./question')
-const { SimpleQuestionStub } = require('./utils/stub')
+const {
+  SimpleQuestionStub,
+  SimpleAnswerStub,
+  QuestionWithAnswersStub
+} = require('./utils/stub')
 const { EntityNotFoundError } = require('./errors/EntityNotFoundError')
 const { SchemaValidationError } = require('./errors/SchemaValidationError')
 
@@ -77,5 +81,30 @@ describe('question repository', () => {
 
     await expect(apply()).rejects.toThrow(SchemaValidationError)
     expect(await questionRepo.getQuestions()).toHaveLength(0)
+  })
+
+  test(`should return 3 answers for question with specified questionId`, async () => {
+    const testQuestion1 = QuestionWithAnswersStub()
+    const testQuestion2 = QuestionWithAnswersStub()
+    const testQuestions = [testQuestion1, testQuestion2]
+
+    await writeFile(TEST_QUESTIONS_FILE_PATH, JSON.stringify(testQuestions))
+
+    const result = await questionRepo.getAnswers(testQuestion1.id)
+    expect(result).toHaveLength(testQuestion1.answers.length)
+    expect(result).toEqual(expect.arrayContaining(testQuestion1.answers))
+    expect(result).not.toEqual(expect.arrayContaining(testQuestion2.answers))
+  })
+
+  test(`should throw an error for answers when no question was found with specified invalid questionId`, async () => {
+    const testQuestion1 = QuestionWithAnswersStub()
+    const testQuestions = [testQuestion1]
+
+    await writeFile(TEST_QUESTIONS_FILE_PATH, JSON.stringify(testQuestions))
+
+    const apply = async () =>
+      await questionRepo.getAnswers(faker.datatype.uuid())
+
+    await expect(apply()).rejects.toThrow(EntityNotFoundError)
   })
 })
