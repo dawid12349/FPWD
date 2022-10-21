@@ -44,7 +44,26 @@ const makeQuestionRepository = fileName => {
 
     return foundQuestion.answers.find(answer => answer.id === answerId)
   }
-  const addAnswer = async (questionId, answer) => {}
+
+  const addAnswer = async (questionId, answer) => {
+    const fileContent = await readFile(fileName, { encoding: 'utf-8' })
+    const questions = JSON.parse(fileContent) || []
+    const foundQuestion = questions.find(question => question.id === questionId)
+
+    if (!foundQuestion) {
+      return undefined
+    }
+
+    if (Array.isArray(foundQuestion.answers)) {
+      foundQuestion.answers.push(answer)
+    } else {
+      foundQuestion.answers = [...answer]
+    }
+
+    await writeFile(fileName, JSON.stringify(questions, null, 2), {
+      encoding: 'utf-8'
+    })
+  }
 
   return {
     getQuestions,
