@@ -1,5 +1,7 @@
 const { EntityNotFoundError } = require('./errors/EntityNotFoundError')
 const { readFile, writeFile } = require('fs/promises')
+const { questionSchema, answerSchema } = require('./utils/validation')
+const { SchemaValidationError } = require('./errors/SchemaValidationError')
 
 const makeQuestionRepository = fileName => {
   let questions = []
@@ -21,6 +23,11 @@ const makeQuestionRepository = fileName => {
   }
 
   const addQuestion = async question => {
+    const { error } = questionSchema.validate(question)
+    if (error) {
+      throw new SchemaValidationError('question')
+    }
+
     await loadQuestionsFromFile()
 
     questions.push(question)
@@ -49,6 +56,11 @@ const makeQuestionRepository = fileName => {
   }
 
   const addAnswer = async (questionId, answer) => {
+    const { error } = answerSchema.validate(answer)
+    if (error) {
+      throw new SchemaValidationError('answer')
+    }
+
     let question = await getQuestionById(questionId)
 
     if (Array.isArray(question.answers)) {
