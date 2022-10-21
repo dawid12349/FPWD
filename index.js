@@ -20,7 +20,20 @@ app.get('/questions', async (req, res) => {
   res.json(questions)
 })
 
-app.get('/questions/:questionId', (req, res) => {})
+app.get('/questions/:questionId', async (req, res) => {
+  const { questionId } = req.params
+
+  const question = await req.repositories.questionRepo.getQuestion()
+
+  if (!question) {
+    return res.status(400).json({
+      success: false,
+      message: `couldn't find question wiht id - ${questionId}`
+    })
+  }
+
+  return res.status(200).json(question)
+})
 
 app.post('/questions', (req, res) => {})
 
