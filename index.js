@@ -71,7 +71,7 @@ app.post('/questions/:questionId/answers', async (req, res) => {
 
   const answer = await req.repositories.questionRepo.addAnswer(
     questionId,
-    answer
+    answerBody
   )
 
   if (!answer) {
@@ -84,9 +84,7 @@ app.post('/questions/:questionId/answers', async (req, res) => {
   return res.status(200).json(answer)
 })
 
-app.get('/questions/:questionId/answers/:answerId', (req, res) => {
-  s
-})
+app.get('/questions/:questionId/answers/:answerId', (req, res) => {})
 
 app.listen(PORT, () => {
   console.log(`Responder app listening on port ${PORT}`)
