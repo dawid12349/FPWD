@@ -51,7 +51,7 @@ const makeQuestionRepository = fileName => {
       foundQuestion.answers = [...answer]
     }
 
-    await writeQuestionToFile(questions)
+    await writeQuestionsToFile(questions)
 
     return answer
   }
@@ -61,7 +61,7 @@ const makeQuestionRepository = fileName => {
     return JSON.parse(fileContent) || []
   }
 
-  const writeQuestionToFile = async questions => {
+  const writeQuestionsToFile = async questions => {
     await writeFile(fileName, JSON.stringify(questions, null, 2), {
       encoding: 'utf-8'
     })

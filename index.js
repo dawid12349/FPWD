@@ -65,9 +65,28 @@ app.get('/questions/:questionId/answers', async (req, res) => {
   return res.status(200).json(question)
 })
 
-app.post('/questions/:questionId/answers', (req, res) => {})
+app.post('/questions/:questionId/answers', async (req, res) => {
+  const { questionId } = req.params
+  const answerBody = req.body
 
-app.get('/questions/:questionId/answers/:answerId', (req, res) => {})
+  const answer = await req.repositories.questionRepo.addAnswer(
+    questionId,
+    answer
+  )
+
+  if (!answer) {
+    return res.status(400).json({
+      success: false,
+      message: `couldn't add answer for question with id - ${questionId}`
+    })
+  }
+
+  return res.status(200).json(answer)
+})
+
+app.get('/questions/:questionId/answers/:answerId', (req, res) => {
+  s
+})
 
 app.listen(PORT, () => {
   console.log(`Responder app listening on port ${PORT}`)
