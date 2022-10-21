@@ -25,7 +25,7 @@ const makeQuestionRepository = fileName => {
   const addQuestion = async question => {
     const { error } = questionSchema.validate(question)
     if (error) {
-      throw new SchemaValidationError('question')
+      throw new SchemaValidationError('question', error)
     }
 
     await loadQuestionsFromFile()
@@ -58,7 +58,7 @@ const makeQuestionRepository = fileName => {
   const addAnswer = async (questionId, answer) => {
     const { error } = answerSchema.validate(answer)
     if (error) {
-      throw new SchemaValidationError('answer')
+      throw new SchemaValidationError('answer', error)
     }
 
     let question = await getQuestionById(questionId)
