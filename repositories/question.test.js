@@ -3,6 +3,7 @@ const { faker } = require('@faker-js/faker')
 const { makeQuestionRepository } = require('./question')
 const { SimpleQuestionStub } = require('./utils/stub')
 const { EntityNotFoundError } = require('./errors/EntityNotFoundError')
+const { SchemaValidationError } = require('./errors/SchemaValidationError')
 
 describe('question repository', () => {
   const TEST_QUESTIONS_FILE_PATH = 'test-questions.json'
@@ -51,5 +52,30 @@ describe('question repository', () => {
       await questionRepo.getQuestionById(faker.datatype.uuid())
 
     await expect(apply()).rejects.toThrow(EntityNotFoundError)
+  })
+
+  test(`should add 1 question`, async () => {
+    const testQuestion1 = SimpleQuestionStub()
+
+    expect(await questionRepo.getQuestions()).toHaveLength(0)
+
+    await questionRepo.addQuestion(testQuestion1)
+
+    const result = await questionRepo.getQuestions()
+    expect(result).toHaveLength(1)
+    expect(result).toEqual(expect.arrayContaining(testQuestion1.answers))
+  })
+
+  test(`should throw an error when trying to add invalid question`, async () => {
+    const testQuestion1 = SimpleQuestionStub()
+
+    expect(await questionRepo.getQuestions()).toHaveLength(0)
+
+    delete testQuestion1.author
+
+    const apply = async () => await questionRepo.addQuestion(testQuestion1)
+
+    await expect(apply()).rejects.toThrow(SchemaValidationError)
+    expect(await questionRepo.getQuestions()).toHaveLength(0)
   })
 })
