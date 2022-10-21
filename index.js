@@ -1,6 +1,12 @@
 const express = require('express')
 const { urlencoded, json } = require('body-parser')
 const makeRepositories = require('./middleware/repositories')
+const {
+  EntityNotFoundError
+} = require('./repositories/errors/EntityNotFoundError')
+const {
+  SchemaValidationError
+} = require('./repositories/errors/SchemaValidationError')
 
 const STORAGE_FILE_PATH = 'questions.json'
 const PORT = 3000
@@ -16,90 +22,100 @@ app.get('/', (_, res) => {
 })
 
 app.get('/questions', async (req, res) => {
-  const questions = await req.repositories.questionRepo.getQuestions()
-  res.json(questions)
+  try {
+    const questions = await req.repositories.questionRepo.getQuestions()
+    return res.status(200).json(questions)
+  } catch (error) {
+    return res.status(500).json({ error: "couldn't handle the request" })
+  }
 })
 
 app.get('/questions/:questionId', async (req, res) => {
   const { questionId } = req.params
 
-  const question = await req.repositories.questionRepo.getQuestionById(
-    questionId
-  )
-
-  if (!question) {
-    return res.status(400).json({
-      success: false,
-      message: `couldn't find question with id - ${questionId}`
-    })
+  try {
+    const question = await req.repositories.questionRepo.getQuestionById(
+      questionId
+    )
+    return res.status(200).json(question)
+  } catch (error) {
+    if (error instanceof EntityNotFoundError) {
+      return res.status(400).json({ error: error.message })
+    } else {
+      return res.status(500).json({ error: "couldn't handle the request" })
+    }
   }
-
-  return res.status(200).json(question)
 })
 
 app.post('/questions', async (req, res) => {
   const questionBody = req.body
-  const question = await req.repositories.questionRepo.addQuestion(questionBody)
 
-  if (!question) {
-    return res.status(400).json({
-      success: false,
-      message: `couldn't add question`
-    })
+  try {
+    const questionId = await req.repositories.questionRepo.addQuestion(
+      questionBody
+    )
+    return res.status(200).json({ questionId })
+  } catch (error) {
+    if (error instanceof SchemaValidationError) {
+      return res.status(400).json({ error: error.message })
+    } else {
+      return res.status(500).json({ error: "couldn't handle the request" })
+    }
   }
-
-  return res.status(200).json(question)
 })
 
 app.get('/questions/:questionId/answers', async (req, res) => {
   const { questionId } = req.params
-  const question = await req.repositories.questionRepo.getAnswers(questionId)
-
-  if (!question) {
-    return res.status(400).json({
-      success: false,
-      message: `couldn't find answers for question with id - ${questionId}`
-    })
+  try {
+    const answers = await req.repositories.questionRepo.getAnswers(questionId)
+    return res.status(200).json(answers)
+  } catch (error) {
+    if (error instanceof EntityNotFoundError) {
+      return res.status(400).json({ error: error.message })
+    } else {
+      return res.status(500).json({ error: "couldn't handle the request" })
+    }
   }
-
-  return res.status(200).json(question)
 })
 
 app.post('/questions/:questionId/answers', async (req, res) => {
   const { questionId } = req.params
   const answerBody = req.body
 
-  const answer = await req.repositories.questionRepo.addAnswer(
-    questionId,
-    answerBody
-  )
-
-  if (!answer) {
-    return res.status(400).json({
-      success: false,
-      message: `couldn't add answer for question with id - ${questionId}`
-    })
+  try {
+    const answerId = await req.repositories.questionRepo.addAnswer(
+      questionId,
+      answerBody
+    )
+    return res.status(200).json({ answerId })
+  } catch (error) {
+    if (
+      error instanceof EntityNotFoundError ||
+      error instanceof SchemaValidationError
+    ) {
+      return res.status(400).json({ error: error.message })
+    } else {
+      return res.status(500).json({ error: "couldn't handle the request" })
+    }
   }
-
-  return res.status(200).json(answer)
 })
 
 app.get('/questions/:questionId/answers/:answerId', async (req, res) => {
   const { questionId, answerId } = req.params
 
-  const answer = await req.repositories.questionRepo.getAnswer(
-    questionId,
-    answerId
-  )
-
-  if (!answer) {
-    return res.status(400).json({
-      success: false,
-      message: `couldn't get answer for question with id - ${questionId} and answer id - ${answerId}`
-    })
+  try {
+    const answer = await req.repositories.questionRepo.getAnswer(
+      questionId,
+      answerId
+    )
+    return res.status(200).json(answer)
+  } catch (error) {
+    if (error instanceof EntityNotFoundError) {
+      return res.status(400).json({ error: error.message })
+    } else {
+      return res.status(500).json({ error: "couldn't handle the request" })
+    }
   }
-
-  return res.status(200).json(answer)
 })
 
 app.listen(PORT, () => {
