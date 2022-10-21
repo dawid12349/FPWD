@@ -1,68 +1,74 @@
+const { EntityNotFoundError } = require('./errors/EntityNotFoundError')
 const { readFile, writeFile } = require('fs/promises')
 
 const makeQuestionRepository = fileName => {
-  const getQuestions = async () => await readQuestionsFromFile()
+  let questions = []
+
+  const getQuestions = async () => {
+    await loadQuestionsFromFile()
+    return questions
+  }
 
   const getQuestionById = async questionId => {
-    const questions = await readQuestionsFromFile()
-    return questions.find(question => question.id === questionId)
-  }
-  const addQuestion = async question => {
-    const questions = await readQuestionsFromFile()
-    questions.push(question)
-    await writeFile(fileName, JSON.stringify(questions, null, 2), {
-      encoding: 'utf-8'
-    })
-    return question
-  }
-  const getAnswers = async questionId => {
-    const questions = await readQuestionsFromFile()
-    const foundQuestion = questions.find(question => question.id === questionId)
+    await loadQuestionsFromFile()
+    const question = questions.find(question => question.id === questionId)
 
-    if (!foundQuestion || !Array.isArray(foundQuestion.answers)) {
-      return undefined
+    if (!question) {
+      throw new EntityNotFoundError('question', questionId)
     }
 
-    return foundQuestion.answers
+    return question
+  }
+
+  const addQuestion = async question => {
+    await loadQuestionsFromFile()
+
+    questions.push(question)
+
+    await writeQuestionsToFile()
+
+    return question.id
+  }
+
+  const getAnswers = async questionId => {
+    const foundQuestion = await getQuestionById(questionId)
+    return foundQuestion.answers || []
   }
 
   const getAnswer = async (questionId, answerId) => {
-    const questions = await readQuestionsFromFile()
-    const foundQuestion = questions.find(question => question.id === questionId)
+    const answers = await getAnswers(questionId)
 
-    if (!foundQuestion || !Array.isArray(foundQuestion.answers)) {
-      return undefined
+    const foundAnswer =
+      Array.isArray(answers) && answers.find(answer => answer.id === answerId)
+
+    if (!foundAnswer) {
+      throw new EntityNotFoundError('answer', answerId)
     }
 
-    return foundQuestion.answers.find(answer => answer.id === answerId)
+    return foundAnswer
   }
 
   const addAnswer = async (questionId, answer) => {
-    const questions = await readQuestionsFromFile()
-    const foundQuestion = questions.find(question => question.id === questionId)
+    let question = await getQuestionById(questionId)
 
-    if (!foundQuestion) {
-      return undefined
-    }
-
-    if (Array.isArray(foundQuestion.answers)) {
-      foundQuestion.answers.push(answer)
+    if (Array.isArray(question.answers)) {
+      question.answers.push(answer)
     } else {
-      foundQuestion.answers = [...answer]
+      question.answers = [answer]
     }
 
-    await writeQuestionsToFile(questions)
+    await writeQuestionsToFile()
 
-    return answer
+    return answer.id
   }
 
-  const readQuestionsFromFile = async () => {
+  const loadQuestionsFromFile = async () => {
     const fileContent = await readFile(fileName, { encoding: 'utf-8' })
-    return JSON.parse(fileContent) || []
+    questions = JSON.parse(fileContent) || []
   }
 
-  const writeQuestionsToFile = async questions => {
-    await writeFile(fileName, JSON.stringify(questions, null, 2), {
+  const writeQuestionsToFile = async () => {
+    await writeFile(fileName, JSON.stringify([...questions], null, 2), {
       encoding: 'utf-8'
     })
   }

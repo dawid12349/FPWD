@@ -4,3 +4,6 @@ class EntityNotFoundError extends Error {
     this.message = `${entityName} with id-${id} was not found`
   }
 }
+module.exports = {
+  EntityNotFoundError
+}
